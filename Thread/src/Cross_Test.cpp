@@ -16,13 +16,21 @@
 #include <sched.h>
 #include <sys/mman.h>
 #include <cstdio>
-//20170314 jshan
+#include <thread>
+#include <unistd.h>
+#include <mqueue.h>
+#include <errno.h>
+#include <string.h>
 #include <pthread.h>
 
 #define MY_PRIORITY	(99)
 #define MAX_SAFE_STACK	(8*1024)
 
 using namespace Voxel;
+
+int32_t frameCount = 1;
+int64_t lastTimeStamp = 0;
+int thread_count = 0;
 
 enum Options
 {
@@ -56,16 +64,49 @@ void help()
   }
 }
 
-
-void* depthThread(void *ptr)
+char buf[160*120];
+void depthThread()
 {
-    
-	return 0;
-}
+    struct mq_attr attr;
+    mqd_t mfd;
+    const XYZIPointCloudFrame *d;
+    char *bufaddr = buf;
 
+    attr.mq_maxmsg  = 160*120;
+    attr.mq_msgsize = 160*120;
+    mfd = mq_open("/depthThread", O_RDONLY | O_CREAT, 0777, &attr);
+
+    if(mfd == -1){
+        perror("depthThread mq_open error \n");
+        exit(-1);
+    }
+    while(1){
+        printf("here\n");
+        if(mq_receive(mfd, buf, 160*120, NULL) == -1){
+            perror("depthThread Receive error");
+            exit(-1);
+        }
+        printf("depthThread Point ::: %p\n", d);
+
+        d = *(const XYZIPointCloudFrame**)bufaddr;
+
+        for (int y = 58; y < 62; ++y) {
+            for (int x = 0; x < 160; ++x) {
+                if ((d->points[x+160*y].z < 1.0) && (d->points[x+160*y].i > 0.001)) {
+                    printf("Capture frame %05d@%lld", d->id, d->timestamp);
+                    printf(" (%7.4f fps) ", 1E6/(d->timestamp - lastTimeStamp));
+                    printf("Object Detected : z : %10.7f\n", d->points[x+160*y].z);
+                }
+            }
+        }
+    }
+	return;
+}
 
 int main(int argc, char *argv[])
 {
+
+  //pthread_t thread;
   struct sched_param param;
 
   param.sched_priority = MY_PRIORITY;
@@ -87,12 +128,9 @@ int main(int argc, char *argv[])
   String serialNumber;
   String dumpFileName;
 
-  int32_t frameCount = 1;
+  //int32_t frameCount = 1;
 
   char *endptr;
-  //20170314 jshan
-  pthread_t thread1;
-  int status;
 
   while (s.Next())
   {
@@ -201,61 +239,22 @@ int main(int argc, char *argv[])
 
   std::cout << "Successfully loaded depth camera for device " << toConnect->id() << std::endl;
 
-//  FilterPtr p = sys.createFilter("Voxel::IIRFilter", DepthCamera::FRAME_RAW_FRAME_PROCESSED);
-//
-//  if(!p)
-//  {
-//    logger(LOG_ERROR) << "Failed to get IIRFilter" << std::endl;
-//    return -1;
-//  }
-//
-//  depthCamera->addFilter(p, DepthCamera::FRAME_RAW_FRAME_PROCESSED);
-
-//  FilterPtr p = sys.createFilter("Voxel::IIRFilter", DepthCamera::FRAME_RAW_FRAME_PROCESSED);
-//
-//  if(!p)
-//  {
-//    logger(LOG_ERROR) << "Failed to get IIRFilter" << std::endl;
-//    return -1;
-//  }
-//
-//  p->set("gain", 0.2f);
-//
-//  depthCamera->addFilter(p, DepthCamera::FRAME_RAW_FRAME_PROCESSED, 0);
-//
   int count = 0;
 
-  TimeStampType lastTimeStamp = 0;
+    TimeStampType lastTimeStamp = 0;
 
-//   depthCamera->registerCallback(DepthCamera::FRAME_DEPTH_FRAME, [&](DepthCamera &dc, const Frame &frame, DepthCamera::FrameType c) {
-//     const DepthFrame *d = dynamic_cast<const DepthFrame *>(&frame);
-//
-//     if(!d)
-//     {
-//       std::cout << "Null frame captured? or not of type DepthFrame" << std::endl;
-//       return;
-//     }
-//
-//     std::cout << "Capture frame " << d->id << "@" << d->timestamp;
-//
-//     if(lastTimeStamp != 0)
-//       std::cout << " (" << 1E6/(d->timestamp - lastTimeStamp) << " fps)";
-//
-//     std::cout << std::endl;
-//
-//     lastTimeStamp = d->timestamp;
-//
-//     f.write((char *)d->depth.data(), sizeof(float)*d->size.width*d->size.height);
-//     f.write((char *)d->amplitude.data(), sizeof(float)*d->size.width*d->size.height);
-//
-//     count++;
-//
-//     if(count >= frameCount)
-//       dc.stop();
-//   });
+    std::thread th(depthThread);
+    //th.join();
+
+    struct mq_attr attr;
+    mqd_t mfd;
+
+    attr.mq_maxmsg   = 160*120;
+    attr.mq_msgsize  = 160*120;
+
 
 depthCamera->registerCallback(DepthCamera::FRAME_XYZI_POINT_CLOUD_FRAME, [&](DepthCamera &dc, const Frame &frame, DepthCamera::FrameType c) {
-  const XYZIPointCloudFrame *d = dynamic_cast<const XYZIPointCloudFrame *>(&frame);
+	const XYZIPointCloudFrame *d = dynamic_cast<const XYZIPointCloudFrame *>(&frame);
 
   if(!d)
   {
@@ -263,40 +262,28 @@ depthCamera->registerCallback(DepthCamera::FRAME_XYZI_POINT_CLOUD_FRAME, [&](Dep
     return;
   }
 
-  // std::cout << "Capture frame " << d->id << "@" << d->timestamp;
-  //printf("Capture frame %05d@%lld", d->id, d->timestamp);
-
   if(lastTimeStamp != 0)
-    //std::cout << " (" << 1E6/(d->timestamp - lastTimeStamp) << " fps)";
-    //printf(" (%7.4f fps) ", 1E6/(d->timestamp - lastTimeStamp));
 
-//  std::cout << std::endl;
-
-  // Do something Detection
-
-//  std::cout << d->points[38560].x << " " << d->points[38560].y << " "
-//            << d->points[38560].z << " " << d->points[38560].i << std::endl;
-//  printf("%10.7f %10.7f %10.7f %10.7f\n", d->points[9680].x,
-//										  d->points[9680].y,
-//										  d->points[9680].z,
-//										  d->points[9680].i);
-  for (int y = 58; y < 62; ++y) {
-    for (int x = 0; x < 160; ++x) {
-      if ((d->points[x+160*y].z < 1.0) && (d->points[x+160*y].i > 0.001)) {
-         printf("Capture frame %05d@%lld", d->id, d->timestamp);
-         printf(" (%7.4f fps) ", 1E6/(d->timestamp - lastTimeStamp));
-         printf("Object Detected : z : %10.7f\n", d->points[x+160*y].z); 
-      }
-    }
-  }
   lastTimeStamp = d->timestamp;
   count++;
-
   if(count >= frameCount)
     dc.stop();
-});
 
-  std::cout << "Here!!!!!!" << std::endl;
+  mfd = mq_open("/depthThread", O_WRONLY|O_CREAT, 0777, &attr);
+  if(mfd == -1){
+      perror("mq open error \n");
+      return;
+  }
+
+  if(mq_send(mfd, (char*)&d, 160*120, 0) == -1)
+  {
+      perror("mfd send error \n");
+
+  }else{
+      printf("mfd send success \n");
+  }
+
+});
 
 
   auto pfname = depthCamera->getCameraProfileNames();
@@ -325,7 +312,7 @@ depthCamera->registerCallback(DepthCamera::FRAME_XYZI_POINT_CLOUD_FRAME, [&](Dep
   else
     logger(LOG_ERROR) << "Could not start the depth camera " << depthCamera->id() << std::endl;
 
-
+  th.join();
 
   return 0;
 }
