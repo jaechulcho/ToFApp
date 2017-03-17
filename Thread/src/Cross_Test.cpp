@@ -68,6 +68,7 @@ void help()
 char buf[160*120];
 void depthThread()
 {
+    printf("depthThread Start\n");
     fgpio gpio;
     mqd_t mfd;
     const XYZIPointCloudFrame *d;
