@@ -36,34 +36,33 @@ int64_t thread_lastTimeStamp = 0;
 
 enum Options
 {
-  VENDOR_ID = 0,
-  PRODUCT_ID = 1,
-  SERIAL_NUMBER = 2,
-  DUMP_FILE = 3,
-  NUM_OF_FRAMES = 4
+    VENDOR_ID = 0,
+    PRODUCT_ID = 1,
+    SERIAL_NUMBER = 2,
+    DUMP_FILE = 3,
+    NUM_OF_FRAMES = 4
 };
 
 Vector<CSimpleOpt::SOption> argumentSpecifications =
 {
-  { VENDOR_ID,    "-v", SO_REQ_SEP, "Vendor ID of the USB device (hexadecimal)"}, // Only worker count is needed here
-  { PRODUCT_ID,   "-p", SO_REQ_SEP, "Comma separated list of Product IDs of the USB devices (hexadecimal)"},
-  { SERIAL_NUMBER,"-s", SO_REQ_SEP, "Serial number of the USB device (string)"},
-  { DUMP_FILE,    "-f", SO_REQ_SEP, "Name of the file to dump extracted frames"},
-  { NUM_OF_FRAMES,"-n", SO_REQ_SEP, "Number of frames to dump [default = 1]"},
-  SO_END_OF_OPTIONS
+    { VENDOR_ID,    "-v", SO_REQ_SEP, "Vendor ID of the USB device (hexadecimal)"}, // Only worker count is needed here
+    { PRODUCT_ID,   "-p", SO_REQ_SEP, "Comma separated list of Product IDs of the USB devices (hexadecimal)"},
+    { SERIAL_NUMBER,"-s", SO_REQ_SEP, "Serial number of the USB device (string)"},
+    { DUMP_FILE,    "-f", SO_REQ_SEP, "Name of the file to dump extracted frames"},
+    { NUM_OF_FRAMES,"-n", SO_REQ_SEP, "Number of frames to dump [default = 1]"},
+    SO_END_OF_OPTIONS
 };
 
 void help()
 {
-  std::cout << "CameraSystemTest v1.0" << std::endl;
+    std::cout << "CameraSystemTest v1.0" << std::endl;
 
-  CSimpleOpt::SOption *option = argumentSpecifications.data();
+    CSimpleOpt::SOption *option = argumentSpecifications.data();
 
-  while(option->nId >= 0)
-  {
-    std::cout << option->pszArg << " " << option->helpInfo << std::endl;
-    option++;
-  }
+    while (option->nId >= 0) {
+        std::cout << option->pszArg << " " << option->helpInfo << std::endl;
+        option++;
+    }
 }
 
 char buf[160*120];
@@ -75,12 +74,12 @@ void depthThread()
     char *bufaddr = buf;
     mfd = mq_open("/depthThread", O_RDONLY, 0777);
 
-    if(mfd == -1){
+    if (mfd == -1) {
         perror("depthThread mq_open error \n");
         exit(-1);
     }
-    while(1){
-        if(mq_receive(mfd, buf, sizeof(buf), NULL) == -1){
+    while (1) {
+        if (mq_receive(mfd, buf, sizeof(buf), NULL) == -1) {
             perror("depthThread Receive error");
             sleep(1);
             continue;
@@ -109,7 +108,7 @@ void depthThread()
 
 void trinity_thread(){
 
-    while(1) {
+    while (1) {
         printf("trinity_thread in\n");
         sleep(1);
     }
@@ -144,129 +143,111 @@ int main(int argc, char *argv[])
     exit(-2);
   }
 */
-  MessageQue_init();
-  gpio_init();
+    MessageQue_init();
+    gpio_init();
+    CSimpleOpt s(argc, argv, argumentSpecifications);
 
-  CSimpleOpt s(argc, argv, argumentSpecifications);
+    logger.setDefaultLogLevel(LOG_INFO);
 
-  logger.setDefaultLogLevel(LOG_INFO);
+    uint16_t vid = 0;
+    Vector<uint16_t> pids;
+    String serialNumber;
+    String dumpFileName;
+    int32_t frameCount = 1;
+    char *endptr;
 
-  uint16_t vid = 0;
+    while (s.Next()) {
+        if (s.LastError() != SO_SUCCESS) {
+            std::cout << s.GetLastErrorText(s.LastError()) << ": '" << s.OptionText() << "' (use -h to get command line help)" << std::endl;
+            help();
+            return -1;
+        }
 
-  Vector<uint16_t> pids;
-  String serialNumber;
-  String dumpFileName;
+        Vector<String> splits;
+        switch (s.OptionId())
+        {
+            case VENDOR_ID:
+                vid = (uint16_t)strtol(s.OptionArg(), &endptr, 16);
+                break;
 
-  int32_t frameCount = 1;
+            case PRODUCT_ID:
+                split(s.OptionArg(), ',', splits);
+                for(auto &s1: splits)
+                    pids.push_back((uint16_t)strtol(s1.c_str(), &endptr, 16));
+                break;
 
-  char *endptr;
+            case SERIAL_NUMBER:
+                serialNumber = s.OptionArg();
+                break;
 
-  while (s.Next())
-  {
-    if (s.LastError() != SO_SUCCESS)
-    {
-      std::cout << s.GetLastErrorText(s.LastError()) << ": '" << s.OptionText() << "' (use -h to get command line help)" << std::endl;
-      help();
-      return -1;
+            case DUMP_FILE:
+                dumpFileName = s.OptionArg();
+                break;
+
+            case NUM_OF_FRAMES:
+                frameCount = (int32_t)strtol(s.OptionArg(), &endptr, 10);
+                break;
+
+            default:
+                help();
+                break;
+        };
     }
 
-    Vector<String> splits;
-    switch (s.OptionId())
-    {
-      case VENDOR_ID:
-        vid = (uint16_t)strtol(s.OptionArg(), &endptr, 16);
-        break;
-
-      case PRODUCT_ID:
-        split(s.OptionArg(), ',', splits);
-
-        for(auto &s1: splits)
-          pids.push_back((uint16_t)strtol(s1.c_str(), &endptr, 16));
-
-        break;
-
-      case SERIAL_NUMBER:
-        serialNumber = s.OptionArg();
-        break;
-
-      case DUMP_FILE:
-        dumpFileName = s.OptionArg();
-        break;
-
-      case NUM_OF_FRAMES:
-        frameCount = (int32_t)strtol(s.OptionArg(), &endptr, 10);
-        break;
-
-      default:
+    if (vid == 0 || pids.size() == 0 || pids[0] == 0) {
+        logger(LOG_ERROR) << "Required argument missing." << std::endl;
         help();
-        break;
-    };
-  }
-
-  if(vid == 0 || pids.size() == 0 || pids[0] == 0)
-  {
-    logger(LOG_ERROR) << "Required argument missing." << std::endl;
-    help();
-    return -1;
-  }
-
-  if (dumpFileName.size() != 0) {
-    std::ofstream f(dumpFileName, std::ios::binary | std::ios::out);
-    if(!f.good())
-    {
-      logger(LOG_ERROR) << "Failed to open '" << dumpFileName << "'" << std::endl;
-      return -1;
+        return -1;
     }
-  }	
 
-  CameraSystem sys;
-
-  // Get all valid detected devices
-  const Vector<DevicePtr> &devices = sys.scan();
-
-  DevicePtr toConnect;
-
-  std::cout << "Detected devices: " << std::endl;
-  for(auto &d: devices)
-  {
-    std::cout << d->id() << std::endl;
-
-    if(d->interfaceID() == Device::USB)
-    {
-      USBDevice &usb = (USBDevice &)*d;
-
-      if(usb.vendorID() == vid && (serialNumber.size() == 0 || usb.serialNumber() == serialNumber))
-      {
-        for(auto pid: pids)
-          if(usb.productID() == pid)
-            toConnect = d;
-      }
+    if (dumpFileName.size() != 0) {
+        std::ofstream f(dumpFileName, std::ios::binary | std::ios::out);
+        if (!f.good()) {
+            logger(LOG_ERROR) << "Failed to open '" << dumpFileName << "'" << std::endl;
+            return -1;
+        }
     }
-  }
 
-  if(!toConnect)
-  {
-    logger(LOG_ERROR) << "No valid device found for the specified VID:PID:serialnumber" << std::endl;
-    return -1;
-  }
+    CameraSystem sys;
 
-  DepthCameraPtr depthCamera = sys.connect(toConnect);
+    // Get all valid detected devices
+    const Vector<DevicePtr> &devices = sys.scan();
+    DevicePtr toConnect;
+    std::cout << "Detected devices: " << std::endl;
 
-  if(!depthCamera)
-  {
-    logger(LOG_ERROR) << "Could not load depth camera for device " << toConnect->id() << std::endl;
-    return -1;
-  }
+    for (auto &d: devices) {
+        std::cout << d->id() << std::endl;
+        if (d->interfaceID() == Device::USB) {
+            USBDevice &usb = (USBDevice &)*d;
+            if (usb.vendorID() == vid && (serialNumber.size() == 0 || usb.serialNumber() == serialNumber)) {
+                for(auto pid: pids)
+                if (usb.productID() == pid) {
+                    toConnect = d;
+                }
+            }
+        }
+    }
 
-  if(!depthCamera->isInitialized())
-  {
-    logger(LOG_ERROR) << "Depth camera not initialized for device " << toConnect->id() << std::endl;
-    return -1;
-  }
+    if (!toConnect) {
+        logger(LOG_ERROR) << "No valid device found for the specified VID:PID:serialnumber" << std::endl;
+        return -1;
+    }
 
-  std::cout << "Successfully loaded depth camera for device " << toConnect->id() << std::endl;
+    DepthCameraPtr depthCamera = sys.connect(toConnect);
 
-  int count = 0;
+    if (!depthCamera) {
+        logger(LOG_ERROR) << "Could not load depth camera for device " << toConnect->id() << std::endl;
+        return -1;
+    }
+
+    if (!depthCamera->isInitialized()) {
+        logger(LOG_ERROR) << "Depth camera not initialized for device " << toConnect->id() << std::endl;
+        return -1;
+    }
+
+    std::cout << "Successfully loaded depth camera for device " << toConnect->id() << std::endl;
+
+    int count = 0;
 
     TimeStampType lastTimeStamp = 0;
 
@@ -277,7 +258,7 @@ int main(int argc, char *argv[])
     attr.mq_msgsize  = 2000;
 
     mfd = mq_open("/depthThread", O_WRONLY|O_CREAT, 0777, &attr);
-    if(mfd == -1){
+    if (mfd == -1) {
         perror("mq open error \n");
         return 0;
     }
@@ -308,53 +289,53 @@ int main(int argc, char *argv[])
         else {
             printf("mfd send success \n");
         }
-/*
-  if(mq_send(mfd_trinity, (char*)&d, sizeof(d), 0) == -1)
-  {
-      perror("mfd_trinity send error \n");
+        /*
+        if(mq_send(mfd_trinity, (char*)&d, sizeof(d), 0) == -1)
+        {
+        perror("mfd_trinity send error \n");
 
-  }else{
-      printf("mfd_trinity send success \n");
-  }
-*/
+        }else{
+        printf("mfd_trinity send success \n");
+        }
+        */
         lastTimeStamp = d->timestamp;
         count++;
         if(count >= frameCount) {
             dc.stop();
         }
-});
+    });
 
+    auto pfname = depthCamera->getCameraProfileNames();
+    Map<int, String>::iterator iter;
+    for (iter = pfname.begin(); iter != pfname.end(); ++iter) {
+        std::cout << "[" << (*iter).first << "] " << (*iter).second << std::endl;
+    }
 
-  auto pfname = depthCamera->getCameraProfileNames();
-  Map<int, String>::iterator iter;
-  for (iter = pfname.begin(); iter != pfname.end(); ++iter) {
-    std::cout << "[" << (*iter).first << "] " << (*iter).second << std::endl;
-  }
+    depthCamera->setCameraProfile(128);
+    depthCamera->setCameraProfile(5);
 
-  depthCamera->setCameraProfile(128);
-  depthCamera->setCameraProfile(5);
-
-  FrameSize fs;
-  fs.width = 160;
-  fs.height = 120;
-  depthCamera->setFrameSize(fs);
+    FrameSize fs;
+    fs.width = 160;
+    fs.height = 120;
+    depthCamera->setFrameSize(fs);
   
-  printf("Current Camera Profile : %d\n", depthCamera->getCurrentCameraProfileID());
+    printf("Current Camera Profile : %d\n", depthCamera->getCurrentCameraProfileID());
 
-  if(depthCamera->start())
-  {
-    FrameRate r;
-    if(depthCamera->getFrameRate(r))
-      logger(LOG_INFO) << "Capturing at a frame rate of " << r.getFrameRate() << " fps" << std::endl;
-    depthCamera->wait();
-  }
-  else
-    logger(LOG_ERROR) << "Could not start the depth camera " << depthCamera->id() << std::endl;
+    if(depthCamera->start()) {
+        FrameRate r;
+        if (depthCamera->getFrameRate(r)) {
+            logger(LOG_INFO) << "Capturing at a frame rate of " << r.getFrameRate() << " fps" << std::endl;
+        }
+        depthCamera->wait();
+    }
+    else {
+        logger(LOG_ERROR) << "Could not start the depth camera " << depthCamera->id() << std::endl;
+    }
 
-  th.join();
-  th2.join();
-  mq_close(mfd);
+    th.join();
+    th2.join();
+    mq_close(mfd);
 
 
-  return 0;
+    return 0;
 }
