@@ -109,7 +109,7 @@ void depthThread()
 
 void trinity_thread(){
 
-    while(1){
+    while(1) {
         printf("trinity_thread in\n");
         sleep(1);
     }
@@ -169,8 +169,6 @@ int main(int argc, char *argv[])
       help();
       return -1;
     }
-
-    //std::cout << s.OptionId() << ": " << s.OptionArg() << std::endl;
 
     Vector<String> splits;
     switch (s.OptionId())
