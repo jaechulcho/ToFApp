@@ -22,15 +22,17 @@
 #include <errno.h>
 #include <string.h>
 #include <pthread.h>
+#include "fgpio.h"
 
 #define MY_PRIORITY	(99)
 #define MAX_SAFE_STACK	(8*1024)
+#define GPIO_OUTPIN_NUM 4
+#define GPIO_INPIN_NUM  3
 
 using namespace Voxel;
 
 int32_t frameCount = 1;
-int64_t lastTimeStamp = 0;
-int thread_count = 0;
+int64_t thread_lastTimeStamp = 0;
 
 enum Options
 {
@@ -67,46 +69,69 @@ void help()
 char buf[160*120];
 void depthThread()
 {
-    struct mq_attr attr;
+    fgpio gpio;
     mqd_t mfd;
     const XYZIPointCloudFrame *d;
     char *bufaddr = buf;
-
-    attr.mq_maxmsg  = 160*120;
-    attr.mq_msgsize = 160*120;
-    mfd = mq_open("/depthThread", O_RDONLY | O_CREAT, 0777, &attr);
+    mfd = mq_open("/depthThread", O_RDONLY, 0777);
 
     if(mfd == -1){
         perror("depthThread mq_open error \n");
         exit(-1);
     }
     while(1){
-        printf("here\n");
-        if(mq_receive(mfd, buf, 160*120, NULL) == -1){
+        if(mq_receive(mfd, buf, sizeof(buf), NULL) == -1){
             perror("depthThread Receive error");
-            exit(-1);
+            sleep(1);
+            continue;
         }
-        printf("depthThread Point ::: %p\n", d);
+        //printf("depthThread Point ::: %p\n", d);
 
         d = *(const XYZIPointCloudFrame**)bufaddr;
 
-        for (int y = 58; y < 62; ++y) {
-            for (int x = 0; x < 160; ++x) {
-                if ((d->points[x+160*y].z < 1.0) && (d->points[x+160*y].i > 0.001)) {
-                    printf("Capture frame %05d@%lld", d->id, d->timestamp);
-                    printf(" (%7.4f fps) ", 1E6/(d->timestamp - lastTimeStamp));
-                    printf("Object Detected : z : %10.7f\n", d->points[x+160*y].z);
-                }
-            }
-        }
+        //for (int y = 58; y < 62; ++y) {
+            //for (int x = 0; x < 160; ++x) {
+                //if ((d->points[x+160*y].z < 1.0) && (d->points[x+160*y].i > 0.001)) {
+                    printf("Capture frame %05d@%ld", d->id, d->timestamp);
+                    printf(" (%7.4f fps) ", 1E6/(d->timestamp - thread_lastTimeStamp));
+                    //printf("Object Detected : z : %10.7f\n", d->points[x+160*y].z);
+                    printf("Object Detected : x : %10.7f , y : %10.7f, z : %10.7f :\n", d->points[0].x, d->points[0].y, d->points[0].z);
+                    gpio.gpio_outmode_value(GPIO_OUTPIN_NUM, 1);
+                //}
+            //}
+        //}
+
+        thread_lastTimeStamp = d->timestamp;
+
     }
 	return;
+}
+
+void trinity_thread(){
+
+    while(1){
+        printf("trinity_thread in\n");
+        sleep(1);
+    }
+    return;
+}
+
+void gpio_init(){
+    fgpio gpio;
+    gpio.gpio_use_sel(GPIO_OUTPIN_NUM);
+    gpio.gpio_in_out_sel("out", GPIO_OUTPIN_NUM);
+    return;
+}
+
+void MessageQue_init(){
+    mq_unlink("/depthThread");
 }
 
 int main(int argc, char *argv[])
 {
 
   //pthread_t thread;
+/*
   struct sched_param param;
 
   param.sched_priority = MY_PRIORITY;
@@ -118,6 +143,10 @@ int main(int argc, char *argv[])
     perror("mlockall failed");
     exit(-2);
   }
+*/
+  MessageQue_init();
+  gpio_init();
+
   CSimpleOpt s(argc, argv, argumentSpecifications);
 
   logger.setDefaultLogLevel(LOG_INFO);
@@ -128,7 +157,7 @@ int main(int argc, char *argv[])
   String serialNumber;
   String dumpFileName;
 
-  //int32_t frameCount = 1;
+  int32_t frameCount = 1;
 
   char *endptr;
 
@@ -243,46 +272,58 @@ int main(int argc, char *argv[])
 
     TimeStampType lastTimeStamp = 0;
 
+    struct mq_attr attr;//, attr_trinity;
+    mqd_t mfd;//, mfd_trinity;
+
+    attr.mq_maxmsg   = 10;
+    attr.mq_msgsize  = 2000;
+
+    mfd = mq_open("/depthThread", O_WRONLY|O_CREAT, 0777, &attr);
+    if(mfd == -1){
+        perror("mq open error \n");
+        return 0;
+    }
+ /*
+    mfd_trinity = mq_open("/trinityThread", O_WRONLY|O_CREAT, 0777, &attr_trinity);
+    if(mfd_trinity == -1){
+        perror("mq open error \n");
+        return 0;
+    }
+*/
     std::thread th(depthThread);
-    //th.join();
+    std::thread th2(trinity_thread);
 
-    struct mq_attr attr;
-    mqd_t mfd;
+    depthCamera->registerCallback(DepthCamera::FRAME_XYZI_POINT_CLOUD_FRAME, [&](DepthCamera &dc, const Frame &frame, DepthCamera::FrameType c) {
+        const XYZIPointCloudFrame *d = dynamic_cast<const XYZIPointCloudFrame *>(&frame);
+        if (!d) {
+            std::cout << "Null frame captured? or not of type XYZIPointCloudFrame" << std::endl;
+            return;
+        }
 
-    attr.mq_maxmsg   = 160*120;
-    attr.mq_msgsize  = 160*120;
+        if (lastTimeStamp != 0) {
+            std::cout << " (" << 1E6/(d->timestamp - lastTimeStamp) << " fps)";
+        }
 
-
-depthCamera->registerCallback(DepthCamera::FRAME_XYZI_POINT_CLOUD_FRAME, [&](DepthCamera &dc, const Frame &frame, DepthCamera::FrameType c) {
-	const XYZIPointCloudFrame *d = dynamic_cast<const XYZIPointCloudFrame *>(&frame);
-
-  if(!d)
+        if(mq_send(mfd, (char*)&d, sizeof(d), 0) == -1) {
+            perror("mfd send error \n");
+        }
+        else {
+            printf("mfd send success \n");
+        }
+/*
+  if(mq_send(mfd_trinity, (char*)&d, sizeof(d), 0) == -1)
   {
-    std::cout << "Null frame captured? or not of type XYZIPointCloudFrame" << std::endl;
-    return;
-  }
-
-  if(lastTimeStamp != 0)
-
-  lastTimeStamp = d->timestamp;
-  count++;
-  if(count >= frameCount)
-    dc.stop();
-
-  mfd = mq_open("/depthThread", O_WRONLY|O_CREAT, 0777, &attr);
-  if(mfd == -1){
-      perror("mq open error \n");
-      return;
-  }
-
-  if(mq_send(mfd, (char*)&d, 160*120, 0) == -1)
-  {
-      perror("mfd send error \n");
+      perror("mfd_trinity send error \n");
 
   }else{
-      printf("mfd send success \n");
+      printf("mfd_trinity send success \n");
   }
-
+*/
+        lastTimeStamp = d->timestamp;
+        count++;
+        if(count >= frameCount) {
+            dc.stop();
+        }
 });
 
 
@@ -313,6 +354,9 @@ depthCamera->registerCallback(DepthCamera::FRAME_XYZI_POINT_CLOUD_FRAME, [&](Dep
     logger(LOG_ERROR) << "Could not start the depth camera " << depthCamera->id() << std::endl;
 
   th.join();
+  th2.join();
+  mq_close(mfd);
+
 
   return 0;
 }
