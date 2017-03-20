@@ -23,16 +23,31 @@
 #include <string.h>
 #include <pthread.h>
 #include "fgpio.h"
+#include "AreaData.h"
+#include <cstdio>
+#include <cstring>
+#include <math.h>
 
 #define MY_PRIORITY	(99)
 #define MAX_SAFE_STACK	(8*1024)
 #define GPIO_OUTPIN_NUM 4
 #define GPIO_INPIN_NUM  3
 
-using namespace Voxel;
+const int FRAME_WIDTH  = 160;
+const int FRAME_HEIGHT = 120;
+const int IMAGESIZE  = FRAME_WIDTH*FRAME_HEIGHT;
+const double Y_MIN   = 0.0;
+const double Y_MAX   = 0.1;
+const double Y_MIN_2 = 0.5;
+const double Y_MAX_2 = 0.6;
+const double I_MIN   = 0.001;
+const double X_MIN   = -0.32;
+const double X_MAX   = 0.32;
+const double Z_MAX   = 5.0;
+const double AREA_1  = 3.0;
+const double AREA_2  = 1.0;
 
-int32_t frameCount = 1;
-int64_t thread_lastTimeStamp = 0;
+using namespace Voxel;
 
 enum Options
 {
@@ -65,57 +80,6 @@ void help()
     }
 }
 
-char buf[160*120];
-void depthThread()
-{
-    printf("depthThread Start\n");
-    fgpio gpio;
-    mqd_t mfd;
-    const XYZIPointCloudFrame *d;
-    char *bufaddr = buf;
-    mfd = mq_open("/depthThread", O_RDONLY, 0777);
-
-    if (mfd == -1) {
-        perror("depthThread mq_open error \n");
-        exit(-1);
-    }
-    while (1) {
-        if (mq_receive(mfd, buf, sizeof(buf), NULL) == -1) {
-            perror("depthThread Receive error");
-            sleep(1);
-            continue;
-        }
-        //printf("depthThread Point ::: %p\n", d);
-
-        d = *(const XYZIPointCloudFrame**)bufaddr;
-
-        //for (int y = 58; y < 62; ++y) {
-            //for (int x = 0; x < 160; ++x) {
-                //if ((d->points[x+160*y].z < 1.0) && (d->points[x+160*y].i > 0.001)) {
-                    printf("Capture frame %05d@%ld", d->id, d->timestamp);
-                    printf(" (%7.4f fps) ", 1E6/(d->timestamp - thread_lastTimeStamp));
-                    //printf("Object Detected : z : %10.7f\n", d->points[x+160*y].z);
-                    printf("Object Detected : x : %10.7f , y : %10.7f, z : %10.7f :\n", d->points[0].x, d->points[0].y, d->points[0].z);
-                    gpio.gpio_outmode_value(GPIO_OUTPIN_NUM, 1);
-                //}
-            //}
-        //}
-
-        thread_lastTimeStamp = d->timestamp;
-
-    }
-	return;
-}
-
-void trinity_thread(){
-
-    while (1) {
-        printf("trinity_thread in\n");
-        sleep(1);
-    }
-    return;
-}
-
 void gpio_init(){
     fgpio gpio;
     gpio.gpio_use_sel(GPIO_OUTPIN_NUM);
@@ -123,9 +87,59 @@ void gpio_init(){
     return;
 }
 
-void MessageQue_init(){
-    mq_unlink("/depthThread");
+int func(const XYZIPointCloudFrame *d,
+                        AreaData ad1,
+                        double y_min, double y_max,
+                        //double x_min, double x_max,
+                        int location){
+    int ret = 0xff;
+	int ret2;
+    char name[10];
+
+	printf("Frame Start !!!!!!!!\n");
+    for (int i = 0 ; i < IMAGESIZE ; i++) {
+        if ((y_min <= d->points[i].y) && (y_max >= d->points[i].y) && (I_MIN < d->points[i].i)) {
+            //if ((x_min <= d->points[i].x) && (x_max >= d->points[i].x) && (Z_MAX >= d->points[i].z)) {
+            	ret2 = ad1.isInside(d->points[i].x, d->points[i].z);
+				ret &= ret2;
+				
+				printf("x ::: %10.7f || z ::: %10.7f ret2 ::: %d \n", d->points[i].x, d->points[i].z, ret2);
+
+            //}
+        }
+    }
+	printf("Frame end !!!!!!!!\n");
+/*
+    if (location == 1) {
+        sprintf(name, "becle");
+    } else {
+        sprintf(name, "||| obstacle");
+    }
+
+	printf("ret ::: %d", ret);
+
+    if (ret == 255) {
+        printf("%s No Object\n", name);
+    } else if ( ret == 6) {
+        printf("%s Area 1\n", name);
+    } else if ( ret == 5) {
+        printf("%s Area 2\n", name);
+    } else if ( ret == 4) {
+        printf("%s Area 2, Area 1\n", name);
+    } else if ( ret == 3) {
+        printf("%s Area 3\n", name);
+    } else if ( ret == 2) {
+        printf("%s Area 1, Are 3\n", name);
+    } else if ( ret == 1) {
+        printf("%s Area 1, Area 2\n", name);
+    } else if ( ret == 0) {
+        printf("%s Area 1, Area 2, Area 3\n", name);
+    }
+*/
+    return ret;
+
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -144,7 +158,6 @@ int main(int argc, char *argv[])
     exit(-2);
   }
 */
-    MessageQue_init();
     gpio_init();
     CSimpleOpt s(argc, argv, argumentSpecifications);
 
@@ -154,7 +167,7 @@ int main(int argc, char *argv[])
     Vector<uint16_t> pids;
     String serialNumber;
     String dumpFileName;
-    int32_t frameCount = 1;
+    //int32_t frameCount = 1;
     char *endptr;
 
     while (s.Next()) {
@@ -186,7 +199,7 @@ int main(int argc, char *argv[])
                 break;
 
             case NUM_OF_FRAMES:
-                frameCount = (int32_t)strtol(s.OptionArg(), &endptr, 10);
+                //frameCount = (int32_t)strtol(s.OptionArg(), &endptr, 10);
                 break;
 
             default:
@@ -249,61 +262,107 @@ int main(int argc, char *argv[])
     std::cout << "Successfully loaded depth camera for device " << toConnect->id() << std::endl;
 
     int count = 0;
-
     TimeStampType lastTimeStamp = 0;
 
-    struct mq_attr attr;//, attr_trinity;
-    mqd_t mfd;//, mfd_trinity;
-
-    attr.mq_maxmsg   = 10;
-    attr.mq_msgsize  = 2000;
-
-    mfd = mq_open("/depthThread", O_WRONLY|O_CREAT, 0777, &attr);
-    if (mfd == -1) {
-        perror("mq open error \n");
-        return 0;
-    }
- /*
-    mfd_trinity = mq_open("/trinityThread", O_WRONLY|O_CREAT, 0777, &attr_trinity);
-    if(mfd_trinity == -1){
-        perror("mq open error \n");
-        return 0;
-    }
-*/
-    std::thread th(depthThread);
-    std::thread th2(trinity_thread);
+    AreaData ad1(3.0, 1.0);
+    ad1[0] = {0.1, 0.0};
+    ad1[1] = {0.32, 0.35};
+    ad1[2] = {0.32, 5.0};
+    ad1[3] = {0.0, 5.0};
+    ad1[4] = {-0.32, 5.0};
+    ad1[5] = {-0.32, 0.35};
+    ad1[6] = {-0.1, 0.0};
 
     depthCamera->registerCallback(DepthCamera::FRAME_XYZI_POINT_CLOUD_FRAME, [&](DepthCamera &dc, const Frame &frame, DepthCamera::FrameType c) {
         const XYZIPointCloudFrame *d = dynamic_cast<const XYZIPointCloudFrame *>(&frame);
+        //int AreaNum, AreaNum2;
         if (!d) {
             std::cout << "Null frame captured? or not of type XYZIPointCloudFrame" << std::endl;
             return;
         }
 
         if (lastTimeStamp != 0) {
-            std::cout << " (" << 1E6/(d->timestamp - lastTimeStamp) << " fps)";
+            std::cout << " (" << 1E6/(d->timestamp - lastTimeStamp) << " fps) ||| ";
         }
 
-        if(mq_send(mfd, (char*)&d, sizeof(d), 0) == -1) {
-            perror("mfd send error \n");
-        }
-        else {
-            printf("mfd send success \n");
-        }
-        /*
-        if(mq_send(mfd_trinity, (char*)&d, sizeof(d), 0) == -1)
-        {
-        perror("mfd_trinity send error \n");
 
-        }else{
-        printf("mfd_trinity send success \n");
+
+        //func(d, ad1, Y_MIN, Y_MAX, X_MIN, X_MAX, 1);
+        //func(d, ad1, Y_MIN_2, Y_MAX_2, X_MIN, X_MAX, 2);
+
+		func(d, ad1, Y_MIN, Y_MAX, 1);
+        //func(d, ad1, Y_MIN_2, Y_MAX_2, 2);
+
+/*
+        AreaNum2 = func(d, Y_MIN_2, Y_MAX_2, X_MIN, X_MAX);
+        if(AreaNum2 == 3){
+            printf("Area2 3 |||");
+        } else if (AreaNum2 == 2) {
+            printf("Area2 2 |||");
+        } else if (AreaNum2 == 1) {
+            printf("Area2 1 |||");
+        } else {
+            printf("No Object |||");
         }
-        */
-        lastTimeStamp = d->timestamp;
-        count++;
-        if(count >= frameCount) {
-            dc.stop();
+
+        AreaNum = func(d, Y_MIN, Y_MAX, X_MIN, X_MAX);
+        if(AreaNum == 3){
+            printf("Area 3\n");
+        } else if (AreaNum == 2) {
+            printf("Area 2\n");
+        } else if (AreaNum == 1) {
+            printf("Area 1\n");
+        } else {
+            printf("No Object\n");
         }
+*/
+/*
+        for (int i = 0 ; i < IMAGESIZE ; i++) {
+            if ((Y_MIN <= d->points[i].y) && (Y_MAX >= d->points[i].y) && (I_MIN < d->points[i].i)) {
+                if ((X_MIN <= d->points[i].x) && (X_MAX >= d->points[i].x) && (Z_MAX >= d->points[i].z)) {
+                    if (AREA_1 < d->points[i].z) {
+                        printf("Area 1");
+                    } else if ((AREA_2 < d->points[i].z) && AREA_1 >= d->points[i].z) {
+                        printf("Area 2");
+                    } else {
+                        printf("Area 3");
+                    }
+                } else {
+                    printf("No Object\n");
+                }
+            }
+        }
+
+        for (int i = 0 ; i < IMAGESIZE ; i++) {
+            if ((Y_MIN_2 <= d->points[i].y) && (Y_MAX_2 >= d->points[i].y) && (I_MIN < d->points[i].i)) {
+                if ((X_MIN <= d->points[i].x) && (X_MAX >= d->points[i].x) && (Z_MAX >= d->points[i].z)) {
+                    if (AREA_1 < d->points[i].z) {
+                        printf("Area 1");
+                    } else if ((AREA_2 < d->points[i].z) && AREA_1 >= d->points[i].z) {
+                        printf("Area 2");
+                    } else {
+                        printf("Area 3");
+                    }
+                } else {
+                    printf("No Object\n");
+                }
+            }
+        }
+*/
+
+
+
+#ifdef _CALLBACK_INFO
+        printf("Capture frame %05d@%ld", d->id, d->timestamp);
+        printf(" (%7.4f fps) ", 1E6/(d->timestamp - lastTimeStamp));
+        printf("Object Detected : z : %10.7f \n", d->points[0].z);
+#endif
+
+       lastTimeStamp = d->timestamp;
+        //count++;
+        //if(count >= frameCount) {
+        //    dc.stop();
+        //}
     });
 
     auto pfname = depthCamera->getCameraProfileNames();
@@ -316,8 +375,8 @@ int main(int argc, char *argv[])
     depthCamera->setCameraProfile(5);
 
     FrameSize fs;
-    fs.width = 160;
-    fs.height = 120;
+    fs.width = FRAME_WIDTH;
+    fs.height = FRAME_HEIGHT;
     depthCamera->setFrameSize(fs);
   
     printf("Current Camera Profile : %d\n", depthCamera->getCurrentCameraProfileID());
@@ -332,11 +391,5 @@ int main(int argc, char *argv[])
     else {
         logger(LOG_ERROR) << "Could not start the depth camera " << depthCamera->id() << std::endl;
     }
-
-    th.join();
-    th2.join();
-    mq_close(mfd);
-
-
     return 0;
 }
