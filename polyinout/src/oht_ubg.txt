@@ -1,0 +1,963 @@
+[UBG AREA DATA FILE]
+
+[Area1]
+[OutPut1]
+[Point1]
+100 0
+[Point2]
+320 350
+[Point3]
+320 5000
+[Point4]
+0 5000
+[Point5]
+-320 5000
+[Point6]
+-320 350
+[Point7]
+-100 0
+[OutPut2]
+1000
+[OutPut3]
+500
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area2]
+[OutPut1]
+[Point1]
+700 0
+[Point2]
+700 1000
+[Point3]
+320 1500
+[Point4]
+320 3000
+[Point5]
+0 3000
+[Point6]
+-320 3000
+[Point7]
+-320 350
+[OutPut2]
+1000
+[OutPut3]
+1000
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area3]
+[OutPut1]
+[Point1]
+320 350
+[Point2]
+320 3000
+[Point3]
+0 3000
+[Point4]
+-320 3000
+[Point5]
+-320 1500
+[Point6]
+-700 1000
+[Point7]
+-700 0
+[OutPut2]
+1000
+[OutPut3]
+1000
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area4]
+[OutPut1]
+[Point1]
+100 0
+[Point2]
+320 350
+[Point3]
+320 1000
+[Point4]
+0 1000
+[Point5]
+-320 1000
+[Point6]
+-320 350
+[Point7]
+-100 0
+[OutPut2]
+1000
+[OutPut3]
+500
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area5]
+[OutPut1]
+[Point1]
+550 0
+[Point2]
+600 1000
+[Point3]
+300 1500
+[Point4]
+0 3000
+[Point5]
+-300 1500
+[Point6]
+-600 1000
+[Point7]
+-550 0
+[OutPut2]
+1000
+[OutPut3]
+700
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area6]
+[OutPut1]
+[Point1]
+475 0
+[Point2]
+550 1000
+[Point3]
+300 1500
+[Point4]
+0 3000
+[Point5]
+-300 1500
+[Point6]
+-550 1000
+[Point7]
+-475 0
+[OutPut2]
+1000
+[OutPut3]
+700
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area7]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area8]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area9]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area10]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area11]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area12]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area13]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area14]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area15]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area16]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area17]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area18]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area19]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area20]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area21]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area22]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area23]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area24]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area25]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area26]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area27]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area28]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area29]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area30]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+
+[Area31]
+[OutPut1]
+[Point1]
+0 0
+[Point2]
+0 0
+[Point3]
+0 0
+[Point4]
+0 0
+[Point5]
+0 0
+[Point6]
+0 0
+[Point7]
+0 0
+[OutPut2]
+0
+[OutPut3]
+0
+[PartitionShape]
+0
+[2ScanMode]
+0
+[MirrorReflectionMode]
+0
+[HalfHysteresis]
+0
+[AGCCutOff]
+0
+

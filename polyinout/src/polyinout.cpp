@@ -11,9 +11,12 @@
 
 using namespace std;
 
-int main() {
-	AreaData ad1(1.0, 0.5);
+void print_area(int val);
 
+int main() {
+	// outpu2,output3 = 1.0m, 0.5m
+	AreaData ad1(3.0, 1.0);
+	// points
 	ad1[0] = {0.1, 0.0};
     ad1[1] = {0.32, 0.35};
     ad1[2] = {0.32, 5.0};
@@ -22,11 +25,21 @@ int main() {
     ad1[5] = {-0.32, 0.35};
     ad1[6] = {-0.1, 0.0};
 
-    int ret = ad1.isInside(0.319, 0.499);
-    printf("result[%08X]\n", ret);
-    ad1.setPartitionShape(1);
-    ret = ad1.isInside(0.319, 0.499);
-    printf("result[%08X]\n", ret);
+    int ret = ad1.isInside(-0.7493770, 0.9963353);
+    print_area(ret);
 
 	return 0;
+}
+
+void print_area(int val)
+{
+	for (int i = 2; i >= 0; i--) {
+		if (!(val & (0x01 << i))) {
+			printf("%9s%d", "area", (i+1));
+		}
+		else {
+			printf("%9s", " ");
+		}
+	}
+	printf("\n");
 }
