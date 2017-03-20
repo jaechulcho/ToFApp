@@ -30,7 +30,7 @@ AreaPoint& AreaData::operator[](int index) {
 
 int AreaData::isInside(double x, double z) const
 {
-    int ret = 0;
+    int ret = 0x07;
     int crosses = 0;
     for (int i = 0; i < MAX_AP_NUM; i++) {
         int j = (i+1)%MAX_AP_NUM;
@@ -67,7 +67,7 @@ int AreaData::isInside(double x, double z) const
             }
         }
         else {
-            ret =  -1;
+            ret =  0x07;
         }
     }
     return ret;
