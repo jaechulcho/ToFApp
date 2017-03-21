@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <cstring>
 #include <math.h>
+#include "profile.h"
 
 #define MY_PRIORITY	(99)
 #define MAX_SAFE_STACK	(8*1024)
@@ -41,8 +42,8 @@ const double Y_MAX   = 0.1;
 const double Y_MIN_2 = 0.5;
 const double Y_MAX_2 = 0.6;
 const double I_MIN   = 0.001;
-const double X_MIN   = -0.32;
-const double X_MAX   = 0.32;
+const double X_MIN   = -0.4;
+const double X_MAX   = 0.4;
 const double Z_MAX   = 5.0;
 const double AREA_1  = 3.0;
 const double AREA_2  = 1.0;
@@ -55,7 +56,9 @@ enum Options
     PRODUCT_ID = 1,
     SERIAL_NUMBER = 2,
     DUMP_FILE = 3,
-    NUM_OF_FRAMES = 4
+    NUM_OF_FRAMES = 4,
+    PBS = 5,
+    UBG = 6,
 };
 
 Vector<CSimpleOpt::SOption> argumentSpecifications =
@@ -65,6 +68,8 @@ Vector<CSimpleOpt::SOption> argumentSpecifications =
     { SERIAL_NUMBER,"-s", SO_REQ_SEP, "Serial number of the USB device (string)"},
     { DUMP_FILE,    "-f", SO_REQ_SEP, "Name of the file to dump extracted frames"},
     { NUM_OF_FRAMES,"-n", SO_REQ_SEP, "Number of frames to dump [default = 1]"},
+    { PBS,"-pbs", SO_REQ_SEP, "Number of frames to dump [default = 1]"},
+    { UBG,"-ubg", SO_REQ_SEP, "Number of frames to dump [default = 1]"},
     SO_END_OF_OPTIONS
 };
 
@@ -90,35 +95,22 @@ void gpio_init(){
 int func(const XYZIPointCloudFrame *d,
                         AreaData ad1,
                         double y_min, double y_max,
-                        //double x_min, double x_max,
                         int location){
     int ret = 0xff;
-	int ret2;
     char name[10];
-
-	printf("Frame Start !!!!!!!!\n");
     for (int i = 0 ; i < IMAGESIZE ; i++) {
         if ((y_min <= d->points[i].y) && (y_max >= d->points[i].y) && (I_MIN < d->points[i].i)) {
-            //if ((x_min <= d->points[i].x) && (x_max >= d->points[i].x) && (Z_MAX >= d->points[i].z)) {
-            	ret2 = ad1.isInside(d->points[i].x, d->points[i].z);
-				ret &= ret2;
-				
-				printf("x ::: %10.7f || z ::: %10.7f ret2 ::: %d \n", d->points[i].x, d->points[i].z, ret2);
-
-            //}
+            ret &= ad1.isInside(d->points[i].x, d->points[i].z);
         }
     }
-	printf("Frame end !!!!!!!!\n");
-/*
+
     if (location == 1) {
-        sprintf(name, "becle");
+        sprintf(name, "obstacle");
     } else {
-        sprintf(name, "||| obstacle");
+        sprintf(name, "||| vehicle");
     }
 
-	printf("ret ::: %d", ret);
-
-    if (ret == 255) {
+    if (ret == 7) {
         printf("%s No Object\n", name);
     } else if ( ret == 6) {
         printf("%s Area 1\n", name);
@@ -131,15 +123,38 @@ int func(const XYZIPointCloudFrame *d,
     } else if ( ret == 2) {
         printf("%s Area 1, Are 3\n", name);
     } else if ( ret == 1) {
-        printf("%s Area 1, Area 2\n", name);
+        printf("%s Area 2, Area 3\n", name);
     } else if ( ret == 0) {
         printf("%s Area 1, Area 2, Area 3\n", name);
     }
-*/
+
     return ret;
 
 }
 
+void fileRead(ifstream& fin, vector<string>& v)
+{
+    string line;
+
+    while (getline(fin, line)){
+        v.push_back(line);
+    }
+    int i = 0;
+    while(1){
+        std::cout << v[i] << std::endl;
+        i++;
+    }
+
+}
+
+void search(vector<string>& v, string& word)
+{
+    for (int i = 0; i < v.size(); i++) {
+        int index = v[i].find(word);
+        if (index != -1)
+            cout << "line " << setw(3) << i+1 << " : " << v[i] << endl;
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -169,6 +184,8 @@ int main(int argc, char *argv[])
     String dumpFileName;
     //int32_t frameCount = 1;
     char *endptr;
+    char *ubgnum;
+    char *pbsnum;
 
     while (s.Next()) {
         if (s.LastError() != SO_SUCCESS) {
@@ -180,14 +197,16 @@ int main(int argc, char *argv[])
         Vector<String> splits;
         switch (s.OptionId())
         {
+
             case VENDOR_ID:
-                vid = (uint16_t)strtol(s.OptionArg(), &endptr, 16);
+                //vid = (uint16_t)strtol(s.OptionArg(), &endptr, 16);
                 break;
 
             case PRODUCT_ID:
-                split(s.OptionArg(), ',', splits);
-                for(auto &s1: splits)
-                    pids.push_back((uint16_t)strtol(s1.c_str(), &endptr, 16));
+                //split(s.OptionArg(), ',', splits);
+                //for(auto &s1: splits)
+                    //pids.push_back((uint16_t)strtol(s1.c_str(), &endptr, 16));
+
                 break;
 
             case SERIAL_NUMBER:
@@ -202,18 +221,24 @@ int main(int argc, char *argv[])
                 //frameCount = (int32_t)strtol(s.OptionArg(), &endptr, 10);
                 break;
 
+            case PBS:
+                pbsnum = s.OptionArg();
+                break;
+            case UBG:
+                ubgnum = s.OptionArg();
+                break;
             default:
                 help();
                 break;
         };
     }
-
-    if (vid == 0 || pids.size() == 0 || pids[0] == 0) {
+/*
+    if (pids.size() == 0 || pids[0] == 0) {
         logger(LOG_ERROR) << "Required argument missing." << std::endl;
         help();
         return -1;
     }
-
+*/
     if (dumpFileName.size() != 0) {
         std::ofstream f(dumpFileName, std::ios::binary | std::ios::out);
         if (!f.good()) {
@@ -229,6 +254,9 @@ int main(int argc, char *argv[])
     DevicePtr toConnect;
     std::cout << "Detected devices: " << std::endl;
 
+    vid = 1105;
+    pids.push_back(37125);
+
     for (auto &d: devices) {
         std::cout << d->id() << std::endl;
         if (d->interfaceID() == Device::USB) {
@@ -241,6 +269,7 @@ int main(int argc, char *argv[])
             }
         }
     }
+
 
     if (!toConnect) {
         logger(LOG_ERROR) << "No valid device found for the specified VID:PID:serialnumber" << std::endl;
@@ -261,17 +290,50 @@ int main(int argc, char *argv[])
 
     std::cout << "Successfully loaded depth camera for device " << toConnect->id() << std::endl;
 
-    int count = 0;
     TimeStampType lastTimeStamp = 0;
+/*
+    vector<string> str;
+    ifstream profile("oht_pbs.txt");
+    fileRead(profile, str);
+    string word;
+    word = "Point1";
+    search(str, word);
+*/
+    int unum, pnum;
+    double area2 , area3;
+    unum = atoi((char*)ubgnum);
+    pnum = atoi((char*)pbsnum);
+    if (pnum == 7) {
+        area2 = 2.0; area3 = 1.0;
+    } else if (pnum == 8) {
+        area2 = 0.3; area3 = 0.2;
+    } else if (pnum == 9) {
+        area2 = 0.3; area3 = 0.2;
+    } else if (pnum == 10) {
+        area2 = 0.3; area3 = 0.2;
+    }
 
-    AreaData ad1(3.0, 1.0);
-    ad1[0] = {0.1, 0.0};
-    ad1[1] = {0.32, 0.35};
-    ad1[2] = {0.32, 5.0};
-    ad1[3] = {0.0, 5.0};
-    ad1[4] = {-0.32, 5.0};
-    ad1[5] = {-0.32, 0.35};
-    ad1[6] = {-0.1, 0.0};
+    AreaData pbs_area = profile_sel(pnum, area2, area3);
+
+    if (unum == 1) {
+        area2 = 1.0; area3 = 1.0;
+    } else if (unum == 2) {
+        area2 = 1.0; area3 = 0.5;
+    } else if (unum == 3) {
+        area2 = 1.0; area3 = 1.0;
+    } else if (unum == 4) {
+        area2 = 1.0; area3 = 0.5;
+    } else if (unum == 5) {
+        area2 = 1.0; area3 = 0.7;
+    } else {
+        area2 = 1.0; area3 = 0.7;
+    }
+
+    AreaData ubg_area = profile_sel(unum, area2, area3);
+
+
+    //AreaData ad1 = Ubg_vpf1();
+    //AreaData ad2 = Pbs_vpf1();
 
     depthCamera->registerCallback(DepthCamera::FRAME_XYZI_POINT_CLOUD_FRAME, [&](DepthCamera &dc, const Frame &frame, DepthCamera::FrameType c) {
         const XYZIPointCloudFrame *d = dynamic_cast<const XYZIPointCloudFrame *>(&frame);
@@ -285,13 +347,8 @@ int main(int argc, char *argv[])
             std::cout << " (" << 1E6/(d->timestamp - lastTimeStamp) << " fps) ||| ";
         }
 
-
-
-        //func(d, ad1, Y_MIN, Y_MAX, X_MIN, X_MAX, 1);
-        //func(d, ad1, Y_MIN_2, Y_MAX_2, X_MIN, X_MAX, 2);
-
-		func(d, ad1, Y_MIN, Y_MAX, 1);
-        //func(d, ad1, Y_MIN_2, Y_MAX_2, 2);
+        func(d, pbs_area, Y_MIN, Y_MAX, 1);
+        func(d, ubg_area, Y_MIN_2, Y_MAX_2, 2);
 
 /*
         AreaNum2 = func(d, Y_MIN_2, Y_MAX_2, X_MIN, X_MAX);
