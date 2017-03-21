@@ -7,11 +7,14 @@
 //============================================================================
 
 #include <iostream>
+#include <vector>
 #include "AreaData.h"
 
 using namespace std;
 
 void print_area(int val);
+
+vector<AreaData> vad;
 
 int main() {
 	// outpu2,output3 = 1.0m, 0.5m
@@ -42,4 +45,9 @@ void print_area(int val)
 		}
 	}
 	printf("\n");
+}
+
+int info_file_parcer(string path)
+{
+	return 0;
 }
