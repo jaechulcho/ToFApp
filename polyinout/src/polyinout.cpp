@@ -23,10 +23,10 @@ int main() {
     ad1[6] = {-0.1, 0.0};
 
     int ret = ad1.isInside(0.319, 0.499);
-    printf("result[%08X]\n", ret);
+    //printf("result[%08X]\n", ret);
     ad1.setPartitionShape(1);
     ret = ad1.isInside(0.319, 0.499);
-    printf("result[%08X]\n", ret);
+    //printf("result[%08X]\n", ret);
 
 	return 0;
 }
